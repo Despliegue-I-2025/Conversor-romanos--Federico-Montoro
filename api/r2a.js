@@ -1,41 +1,47 @@
-// Mapa de valores romanos
-const romanValues = {
-  I: 1, V: 5, X: 10, L: 50,
-  C: 100, D: 500, M: 1000
+// /api/r2a.js
+import cors from "cors";
+
+const ROMAN_VALUES = {
+  M: 1000, D: 500, C: 100, L: 50,
+  X: 10, V: 5, I: 1
 };
 
-// Convierte número romano a arábigo
-function romanToArabic(roman) {
-  if (!roman || typeof roman !== "string") return null;
+const handler = (req, res) => {
+  cors()(req, res, () => {
+    const roman = req.query.roman;
 
-  roman = roman.toUpperCase();
-  let total = 0;
-  let i = 0;
-
-  while (i < roman.length) {
-    const val = romanValues[roman[i]];
-    const next = romanValues[roman[i + 1]];
-    if (!val) return null;
-
-    if (next && next > val) {
-      total += next - val;
-      i += 2;
-    } else {
-      total += val;
-      i++;
+    if (!roman || typeof roman !== "string") {
+      return res.status(400).json({ error: "Parámetro roman requerido." });
     }
-  }
 
-  return total;
-}
+    const upper = roman.toUpperCase();
+    let total = 0;
+    let i = 0;
 
-export default function handler(req, res) {
-  const { roman } = req.query;
-  const result = romanToArabic(roman);
+    while (i < upper.length) {
+      const current = ROMAN_VALUES[upper[i]];
+      const next = ROMAN_VALUES[upper[i + 1]];
 
-  if (!result) {
-    return res.status(400).json({ error: "Número romano inválido." });
-  }
+      if (!current) {
+        return res.status(400).json({ error: "Número romano inválido." });
+      }
 
-  return res.status(200).json({ arabic: result });
-}
+      if (next && next > current) {
+        total += next - current;
+        i += 2;
+      } else {
+        total += current;
+        i++;
+      }
+    }
+
+    if (total < 1 || total > 3999) {
+      return res.status(400).json({ error: "Número romano inválido (1-3999)." });
+    }
+
+    return res.status(200).json({ arabic: total });
+  });
+};
+
+export default handler;
+

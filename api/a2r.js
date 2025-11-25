@@ -1,37 +1,34 @@
-// Convierte número arábigo a romano
-function arabicToRoman(n) {
-  if (!Number.isInteger(n) || n < 1 || n > 3999) return null;
+// /api/a2r.js
+import cors from "cors";
 
-  const rules = [
-    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
-    [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
-    [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'],
-    [1, 'I']
-  ];
+const handler = (req, res) => {
+  cors()(req, res, () => {
+    const arabic = parseInt(req.query.arabic, 10);
 
-  let result = '';
-  for (const [value, symbol] of rules) {
-    while (n >= value) {
-      result += symbol;
-      n -= value;
+    if (!arabic || arabic < 1 || arabic > 3999) {
+      return res.status(400).json({ error: "Número arábico inválido (1-3999)." });
     }
-  }
 
-  return result;
-}
+    const rules = [
+      [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+      [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+      [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'],
+      [1, 'I']
+    ];
 
-export default function handler(req, res) {
-  const { arabic } = req.query;
-  const num = parseInt(arabic);
+    let result = '';
+    let n = arabic;
 
-  if (!arabic || isNaN(num)) {
-    return res.status(400).json({ error: "Parámetro arábico inválido." });
-  }
+    for (const [value, symbol] of rules) {
+      while (n >= value) {
+        result += symbol;
+        n -= value;
+      }
+    }
 
-  const roman = arabicToRoman(num);
-  if (!roman) {
-    return res.status(400).json({ error: "Número fuera de rango (1-3999)." });
-  }
+    return res.status(200).json({ roman: result });
+  });
+};
 
-  return res.status(200).json({ roman });
-}
+export default handler;
+
