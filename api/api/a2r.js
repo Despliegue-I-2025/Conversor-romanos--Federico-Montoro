@@ -1,11 +1,17 @@
-const { romanToArabic } = require('../index.js');
+const cors = require('cors');
+const corsHandler = cors();
 
 module.exports = (req, res) => {
-  const arabic = parseInt(req.query.arabic);
-  if (!arabic) return res.status(400).json({ error: "Parámetro arábico requerido." });
+  corsHandler(req, res, () => {
+    const { arabic } = req.query;
+    const num = parseInt(arabic);
 
-  const result = arabicToRoman(arabic);
-  if (!result) return res.status(400).json({ error: "Número arábico inválido (1-3999)." });
+    if (!arabic) return res.status(400).json({ error: "Parametro arábico requerido." });
+    if (isNaN(num) || num < 1 || num > 3999)
+      return res.status(400).json({ error: "Numero arábico inválido (1-3999)." });
 
-  return res.status(200).json({ roman: result });
+    const result = arabicToRoman(num);
+    return res.status(200).json({ roman: result });
+  });
 };
+
