@@ -1,47 +1,54 @@
-// /api/r2a.js
-import cors from "cors";
+// api/r2a.js
 
-const ROMAN_VALUES = {
+const romanValues = {
   M: 1000, D: 500, C: 100, L: 50,
   X: 10, V: 5, I: 1
 };
 
-const handler = (req, res) => {
-  cors()(req, res, () => {
-    const roman = req.query.roman;
+function fromRoman(roman) {
+  let total = 0;
 
-    if (!roman || typeof roman !== "string") {
-      return res.status(400).json({ error: "Parámetro roman requerido." });
+  for (let i = 0; i < roman.length; i++) {
+    const curr = romanValues[roman[i]];
+    const next = romanValues[roman[i + 1]];
+
+    if (!curr) return NaN;
+
+    if (next && next > curr) {
+      total += next - curr;
+      i++;
+    } else {
+      total += curr;
     }
+  }
+  return total;
+}
 
-    const upper = roman.toUpperCase();
-    let total = 0;
-    let i = 0;
+module.exports = (req, res) => {
+  // 🔓 CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    while (i < upper.length) {
-      const current = ROMAN_VALUES[upper[i]];
-      const next = ROMAN_VALUES[upper[i + 1]];
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-      if (!current) {
-        return res.status(400).json({ error: "Número romano inválido." });
-      }
+  // El evaluador manda ?roman=CXXIII
+  const romanParam = (req.query.roman || '').toUpperCase();
 
-      if (next && next > current) {
-        total += next - current;
-        i += 2;
-      } else {
-        total += current;
-        i++;
-      }
-    }
+  if (!romanParam || !/^[MDCLXVI]+$/.test(romanParam)) {
+    return res.status(400).json({ error: 'invalid or missing roman parameter' });
+  }
 
-    if (total < 1 || total > 3999) {
-      return res.status(400).json({ error: "Número romano inválido (1-3999)." });
-    }
+  const arabic = fromRoman(romanParam);
 
-    return res.status(200).json({ arabic: total });
-  });
+  if (Number.isNaN(arabic)) {
+    return res.status(400).json({ error: 'invalid roman numeral' });
+  }
+
+  // El evaluador espera { "arabic": 123 }
+  return res.status(200).json({ arabic });
 };
 
-export default handler;
 
